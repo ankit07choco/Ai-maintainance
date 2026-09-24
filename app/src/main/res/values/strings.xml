@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AI Maintenance</string>
+    <string name="vehicle_system_initialized">Vehicle Maintenance System Initialized</string>
+    <string name="reset_normal_telemetry">Reset Normal Telemetry</string>
+    <string name="simulate_high_engine_temp_maintenance_alert">Simulate High Engine Temp / Maintenance Alert</string>
+    <string name="status_normal">Status: All car parts &amp; systems operating normally.</string>
+    <string name="maintenance_required">Maintenance Required!</string>
+</resources>
