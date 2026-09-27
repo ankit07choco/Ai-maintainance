@@ -18,8 +18,14 @@ class VehicleDataCollector(
         Float,
         Float,
         Float,
+        Float,
+        Float,
+        Float,
+        Float,
+        Float,
+        Float,
         String?,
-    ) -> Unit = { _, _, _, _, _, _ -> },
+    ) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
 ) {
 
     private var car: Car? = null
@@ -31,6 +37,12 @@ class VehicleDataCollector(
     private var currentBatteryVoltage: Float = 12.6f
     private var currentOilLevel: Float = 1.0f
     private var currentMileage: Float = 45200.0f
+    private var tpFrontLeft: Float = 32.0f
+    private var tpFrontRight: Float = 32.0f
+    private var tpRearLeft: Float = 32.0f
+    private var tpRearRight: Float = 32.0f
+    private var currentBrakePadWear: Float = 85.0f
+    private var currentTransmissionTemp: Float = 88.0f
 
     private val propertyCallback = object : CarPropertyManager.CarPropertyEventCallback {
         override fun onChangeEvent(value: CarPropertyValue<*>) {
@@ -125,11 +137,28 @@ class VehicleDataCollector(
         car?.disconnect()
     }
 
-    fun simulateTelemetry(engineTemp: Float, batteryVoltage: Float, oilLevel: Float, mileage: Float) {
+    fun simulateTelemetry(
+        engineTemp: Float,
+        batteryVoltage: Float,
+        oilLevel: Float,
+        mileage: Float,
+        frontLeft: Float = 32.0f,
+        frontRight: Float = 32.0f,
+        rearLeft: Float = 32.0f,
+        rearRight: Float = 32.0f,
+        brakePadWear: Float = 85.0f,
+        transmissionTemp: Float = 88.0f,
+    ) {
         currentEngineTemp = engineTemp
         currentBatteryVoltage = batteryVoltage
         currentOilLevel = oilLevel
         currentMileage = mileage
+        tpFrontLeft = frontLeft
+        tpFrontRight = frontRight
+        tpRearLeft = rearLeft
+        tpRearRight = rearRight
+        currentBrakePadWear = brakePadWear
+        currentTransmissionTemp = transmissionTemp
         runInferenceAndCheck()
     }
 
@@ -155,11 +184,23 @@ class VehicleDataCollector(
             }
             currentBatteryVoltage < 11.5f -> {
                 healthScore = 0.20f
-                alertMessage = "Maintenance Alert: Low Battery/Fuel Voltage (${currentBatteryVoltage}V)! Service inspection needed."
+                alertMessage = "Maintenance Alert: Low Battery Voltage (${currentBatteryVoltage}V)! Alternator inspection needed."
             }
             currentOilLevel < 0.3f -> {
                 healthScore = 0.18f
                 alertMessage = "Maintenance Alert: Low Oil Level ($currentOilLevel)! Engine oil change recommended immediately."
+            }
+            tpFrontLeft < 25.0f || tpFrontRight < 25.0f || tpRearLeft < 25.0f || tpRearRight < 25.0f -> {
+                healthScore = 0.22f
+                alertMessage = "Maintenance Alert: Low Tire Pressure Detected! Check tires for leaks."
+            }
+            currentBrakePadWear < 15.0f -> {
+                healthScore = 0.12f
+                alertMessage = "Maintenance Alert: Brake Pads Critically Worn ($currentBrakePadWear% remaining)! Replace brake pads immediately."
+            }
+            currentTransmissionTemp > 105.0f -> {
+                healthScore = 0.25f
+                alertMessage = "Maintenance Alert: Transmission Overheating ($currentTransmissionTemp°C)! Check transmission fluid."
             }
             else -> {
                 healthScore = baseScore
@@ -167,7 +208,20 @@ class VehicleDataCollector(
             }
         }
 
-        onTelemetryUpdated(currentEngineTemp, currentBatteryVoltage, currentOilLevel, currentMileage, healthScore, alertMessage)
+        onTelemetryUpdated(
+            currentEngineTemp,
+            currentBatteryVoltage,
+            currentOilLevel,
+            currentMileage,
+            tpFrontLeft,
+            tpFrontRight,
+            tpRearLeft,
+            tpRearRight,
+            currentBrakePadWear,
+            currentTransmissionTemp,
+            healthScore,
+            alertMessage,
+        )
     }
 
     private fun showMaintenanceAlert(title: String, message: String) {
