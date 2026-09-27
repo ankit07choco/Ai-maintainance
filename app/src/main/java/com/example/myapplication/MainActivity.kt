@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButton
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -37,53 +38,69 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvBrakePads: TextView
     private lateinit var tvTransmissionTemp: TextView
     private lateinit var tvMileage: TextView
+    private lateinit var tvSpeed: TextView
 
-    private val simulationHandler = Handler(Looper.getMainLooper())
-    private var simulationStep = 0
-    private var simulatedMileage = 45200.0f
+    private lateinit var btnEngineToggle: MaterialButton
+    private lateinit var btnGearP: MaterialButton
+    private lateinit var btnGearR: MaterialButton
+    private lateinit var btnGearN: MaterialButton
+    private lateinit var btnGearD: MaterialButton
+    private lateinit var btnDrive: MaterialButton
+    private lateinit var btnWearBrakes: MaterialButton
+    private lateinit var btnPuncture: MaterialButton
+    private lateinit var btnReset: MaterialButton
+
+    private var simulatedMileage = 0.0f
+    private var currentSpeed = 0.0f
+    private var simulatedTemp = 90.0f
+    private var simulatedOil = 1.0f
+    private var isFlPunctured = false
+    private var simulatedBrakes = 100.0f
+    private var simulatedTransTemp = 88.0f
+
+    private var isEngineOn = true
+    private var currentGear = "P"
+
     private var lastAlertSentTime = 0L
     private var lastWasWarning = false
     private var pulseAnimator: ObjectAnimator? = null
 
+    private val physicsHandler = Handler(Looper.getMainLooper())
+    private val physicsRunnable = object : Runnable {
+        override fun run() {
+            // Real-time Physics Loop running every 500ms
+            if (currentSpeed > 0.0f) {
+                // Mileage accumulates dynamically whenever vehicle speed > 0
+                simulatedMileage += (currentSpeed / 3600.0f) * 0.5f
+
+                // Engine cooling towards 90°C as car slows down or coasts
+                if (simulatedTemp > 90.0f) {
+                    simulatedTemp = maxOf(90.0f, simulatedTemp - 0.5f)
+                }
+                if (simulatedTransTemp > 88.0f) {
+                    simulatedTransTemp = maxOf(88.0f, simulatedTransTemp - 0.4f)
+                }
+
+                // Natural coasting speed reduction if not pressing gas
+                currentSpeed = maxOf(0.0f, currentSpeed - 0.8f)
+            } else {
+                // Engine cooling when stationary/idling
+                if (simulatedTemp > 90.0f) {
+                    simulatedTemp = maxOf(90.0f, simulatedTemp - 1.0f)
+                }
+                if (simulatedTransTemp > 88.0f) {
+                    simulatedTransTemp = maxOf(88.0f, simulatedTransTemp - 0.8f)
+                }
+            }
+
+            updateTelemetry()
+            physicsHandler.postDelayed(this, 500)
+        }
+    }
+
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { _: Map<String, Boolean> -> }
-
-    private val liveSimulationRunnable = object : Runnable {
-        override fun run() {
-            // Accumulate odometer mileage steadily upwards as the car drives
-            simulatedMileage += 0.5f
-
-            when (simulationStep % 6) {
-                0 -> {
-                    // Normal State
-                    vehicleDataCollector.simulateTelemetry(90.0f, 12.6f, 1.0f, simulatedMileage, 32.0f, 32.0f, 32.0f, 32.0f, 85.0f, 88.0f)
-                }
-                1 -> {
-                    // Engine Overheat
-                    vehicleDataCollector.simulateTelemetry(118.5f, 12.5f, 0.9f, simulatedMileage, 32.0f, 32.0f, 32.0f, 32.0f, 80.0f, 95.0f)
-                }
-                2 -> {
-                    // Low Battery
-                    vehicleDataCollector.simulateTelemetry(92.0f, 10.8f, 1.0f, simulatedMileage, 31.0f, 31.0f, 31.0f, 31.0f, 75.0f, 90.0f)
-                }
-                3 -> {
-                    // Low Oil Level
-                    vehicleDataCollector.simulateTelemetry(95.0f, 12.4f, 0.2f, simulatedMileage, 30.0f, 30.0f, 30.0f, 30.0f, 70.0f, 92.0f)
-                }
-                4 -> {
-                    // Low Tire Pressure (Front-Left Puncture)
-                    vehicleDataCollector.simulateTelemetry(91.0f, 12.5f, 1.0f, simulatedMileage, 21.0f, 32.0f, 32.0f, 32.0f, 65.0f, 89.0f)
-                }
-                5 -> {
-                    // Worn Brake Pads
-                    vehicleDataCollector.simulateTelemetry(93.0f, 12.6f, 1.0f, simulatedMileage, 32.0f, 32.0f, 32.0f, 32.0f, 10.0f, 94.0f)
-                }
-            }
-            simulationStep++
-            simulationHandler.postDelayed(this, 6000)
-        }
-    }
 
     @Suppress("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,13 +133,30 @@ class MainActivity : AppCompatActivity() {
         tvBrakePads = findViewById(R.id.tvBrakePads)
         tvTransmissionTemp = findViewById(R.id.tvTransmissionTemp)
         tvMileage = findViewById(R.id.tvMileage)
+        tvSpeed = findViewById(R.id.tvSpeed)
 
-        vehicleDataCollector = VehicleDataCollector(this) { engineTemp, batteryVoltage, oilLevel, mileage, fl, fr, rl, rr, brakePadWear, transmissionTemp, healthScore, alertMessage ->
+        btnEngineToggle = findViewById(R.id.btnEngineToggle)
+        btnGearP = findViewById(R.id.btnGearP)
+        btnGearR = findViewById(R.id.btnGearR)
+        btnGearN = findViewById(R.id.btnGearN)
+        btnGearD = findViewById(R.id.btnGearD)
+        btnDrive = findViewById(R.id.btnDrive)
+        btnWearBrakes = findViewById(R.id.btnWearBrakes)
+        btnPuncture = findViewById(R.id.btnPuncture)
+        btnReset = findViewById(R.id.btnReset)
+
+        vehicleDataCollector = VehicleDataCollector(this) { engineTemp, _, oilLevel, mileage, fl, fr, rl, rr, brakePadWear, transmissionTemp, healthScore, alertMessage ->
             runOnUiThread {
-                val percentage = (healthScore * 100).toInt()
+                val batteryPercent = maxOf(0.0f, 100.0f - ((mileage / 450.0f) * 100.0f))
+
+                // Check for low battery warning (< 15%)
+                val effectiveHealth = if (batteryPercent < 15.0f) 0.20f else healthScore
+                val effectiveAlert = if (batteryPercent < 15.0f) "Maintenance Alert: EV Battery Low (${batteryPercent.toInt()}%)! Recharge required." else alertMessage
+
+                val percentage = (effectiveHealth * 100).toInt()
                 tvHealthScore.text = "$percentage%"
 
-                val isWarning = healthScore < 0.30f
+                val isWarning = effectiveHealth < 0.30f
                 if (isWarning != lastWasWarning) {
                     lastWasWarning = isWarning
                     animateHealthTransition(isWarning)
@@ -132,12 +166,12 @@ class MainActivity : AppCompatActivity() {
                 if (isWarning) {
                     tvHealthScore.setTextColor(Color.rgb(239, 68, 68)) // Red
                     tvAlertBanner.setBackgroundColor(Color.rgb(127, 29, 29)) // Dark Red
-                    tvAlertBanner.text = alertMessage ?: getString(R.string.maintenance_required)
+                    tvAlertBanner.text = effectiveAlert ?: getString(R.string.maintenance_required)
 
                     val currentTime = System.currentTimeMillis()
                     if ((currentTime - lastAlertSentTime) > 10000L) {
                         lastAlertSentTime = currentTime
-                        val message = alertMessage ?: "Maintenance Required!"
+                        val message = effectiveAlert ?: "Maintenance Required!"
                         notificationHelper.showMaintenanceAlertNotification("Critical Vehicle Warning", message)
                         bluetoothAlertServer.sendAlertToPhone(message)
                         networkAlertServer.sendAlertToPhone(message)
@@ -148,20 +182,132 @@ class MainActivity : AppCompatActivity() {
                     tvAlertBanner.text = "All car parts & systems operating at peak performance."
                 }
 
-                tvEngineTemp.text = String.format(Locale.getDefault(), "%.1f °C", engineTemp)
-                tvBatteryVoltage.text = String.format(Locale.getDefault(), "%.1f V", batteryVoltage)
+                tvEngineTemp.text = if (isEngineOn) String.format(Locale.getDefault(), "%.1f °C", engineTemp) else "OFF (Ambient)"
+                tvBatteryVoltage.text = String.format(Locale.getDefault(), "%d%% (%.0f km left)", batteryPercent.toInt(), maxOf(0.0f, 450.0f - mileage))
                 tvOilLevel.text = if (oilLevel < 0.3f) "Low ($oilLevel)" else "Optimal ($oilLevel)"
 
-                tvFrontLeft.text = if (fl < 25f) "Front-Left: $fl PSI (Low)" else "Front-Left: $fl PSI"
-                tvFrontRight.text = if (fr < 25f) "Front-Right: $fr PSI (Low)" else "Front-Right: $fr PSI"
-                tvRearLeft.text = if (rl < 25f) "Rear-Left: $rl PSI (Low)" else "Rear-Left: $rl PSI"
-                tvRearRight.text = if (rr < 25f) "Rear-Right: $rr PSI (Low)" else "Rear-Right: $rr PSI"
+                tvFrontLeft.text = if (fl < 25f) String.format(Locale.getDefault(), "Front-Left: %.1f PSI (Low)", fl) else String.format(Locale.getDefault(), "Front-Left: %.1f PSI", fl)
+                tvFrontRight.text = String.format(Locale.getDefault(), "Front-Right: %.1f PSI", fr)
+                tvRearLeft.text = String.format(Locale.getDefault(), "Rear-Left: %.1f PSI", rl)
+                tvRearRight.text = String.format(Locale.getDefault(), "Rear-Right: %.1f PSI", rr)
 
                 tvBrakePads.text = if (brakePadWear < 15f) "Critical (${brakePadWear.toInt()}%)" else "${brakePadWear.toInt()}% Remaining"
-                tvTransmissionTemp.text = String.format(Locale.getDefault(), "%.1f °C", transmissionTemp)
-                tvMileage.text = String.format(Locale.getDefault(), "%,.0f km", mileage)
+                tvTransmissionTemp.text = if (isEngineOn) String.format(Locale.getDefault(), "%.1f °C", transmissionTemp) else "OFF"
+                tvMileage.text = String.format(Locale.getDefault(), "%.2f km", mileage)
+                tvSpeed.text = String.format(Locale.getDefault(), "%.0f km/h", currentSpeed)
             }
         }
+
+        btnEngineToggle.setOnClickListener {
+            isEngineOn = !isEngineOn
+            if (isEngineOn) {
+                btnEngineToggle.text = "Engine: ON"
+                simulatedTemp = 90.0f
+            } else {
+                btnEngineToggle.text = "Engine: OFF"
+                simulatedTemp = 25.0f
+                currentSpeed = 0.0f
+            }
+            updateTelemetry()
+        }
+
+        btnGearP.setOnClickListener {
+            currentGear = "P"
+            highlightGear("P")
+            currentSpeed = 0.0f
+            updateTelemetry()
+        }
+
+        btnGearR.setOnClickListener {
+            currentGear = "R"
+            highlightGear("R")
+            updateTelemetry()
+        }
+
+        btnGearN.setOnClickListener {
+            currentGear = "N"
+            highlightGear("N")
+            updateTelemetry()
+        }
+
+        btnGearD.setOnClickListener {
+            currentGear = "D"
+            highlightGear("D")
+            updateTelemetry()
+        }
+
+        btnDrive.setOnClickListener {
+            if ((isEngineOn) && (currentGear == "D" || currentGear == "R")) {
+                val maxSpeed = if (currentGear == "R") 35.0f else 140.0f
+                currentSpeed = minOf(maxSpeed, currentSpeed + 8.0f)
+                simulatedTemp = minOf(125.0f, simulatedTemp + 2.0f)
+                simulatedTransTemp = minOf(115.0f, simulatedTransTemp + 1.5f)
+                updateTelemetry()
+            }
+        }
+
+        btnWearBrakes.setOnClickListener {
+            currentSpeed = maxOf(0.0f, currentSpeed - 20.0f)
+            simulatedBrakes = maxOf(0.0f, simulatedBrakes - 2.0f) // Gradual brake wear from 100%
+            updateTelemetry()
+        }
+
+        btnPuncture.setOnClickListener {
+            isFlPunctured = true
+            updateTelemetry()
+        }
+
+        btnReset.setOnClickListener {
+            simulatedMileage = 0.0f
+            currentSpeed = 0.0f
+            simulatedTemp = 90.0f
+            simulatedOil = 1.0f
+            isFlPunctured = false
+            simulatedBrakes = 100.0f
+            simulatedTransTemp = 88.0f
+            isEngineOn = true
+            currentGear = "P"
+            btnEngineToggle.text = "Engine: ON"
+            highlightGear("P")
+            updateTelemetry()
+        }
+
+        // Initial state
+        updateTelemetry()
+    }
+
+    private fun highlightGear(gear: String) {
+        val defaultColor = Color.rgb(71, 85, 105)
+        val activeColor = Color.rgb(37, 99, 235)
+        btnGearP.setBackgroundColor(if (gear == "P") activeColor else defaultColor)
+        btnGearR.setBackgroundColor(if (gear == "R") activeColor else defaultColor)
+        btnGearN.setBackgroundColor(if (gear == "N") activeColor else defaultColor)
+        btnGearD.setBackgroundColor(if (gear == "D") activeColor else defaultColor)
+    }
+
+    private fun updateTelemetry() {
+        val effectiveTemp = if (isEngineOn) simulatedTemp else 25.0f
+        val effectiveTrans = if (isEngineOn) simulatedTransTemp else 25.0f
+
+        // Physics-based tire pressure warmup as speed increases
+        val thermalPressureOffset = minOf(2.5f, (currentSpeed / 100.0f) * 1.5f)
+        val flPressure = if (isFlPunctured) 20.0f else (32.0f + thermalPressureOffset)
+        val frPressure = 32.0f + thermalPressureOffset
+        val rlPressure = 32.0f + thermalPressureOffset
+        val rrPressure = 32.0f + thermalPressureOffset
+
+        vehicleDataCollector.simulateTelemetry(
+            effectiveTemp,
+            12.6f,
+            simulatedOil,
+            simulatedMileage,
+            flPressure,
+            frPressure,
+            rlPressure,
+            rrPressure,
+            simulatedBrakes,
+            effectiveTrans,
+        )
     }
 
     private fun animateHealthTransition(isWarning: Boolean) {
@@ -196,7 +342,7 @@ class MainActivity : AppCompatActivity() {
         vehicleDataCollector.registerVehicleListeners()
         bluetoothAlertServer.startServer()
         networkAlertServer.startServer()
-        simulationHandler.post(liveSimulationRunnable)
+        physicsHandler.post(physicsRunnable)
     }
 
     override fun onPause() {
@@ -204,6 +350,6 @@ class MainActivity : AppCompatActivity() {
         vehicleDataCollector.unregisterVehicleListeners()
         bluetoothAlertServer.stopServer()
         networkAlertServer.stopServer()
-        simulationHandler.removeCallbacks(liveSimulationRunnable)
+        physicsHandler.removeCallbacks(physicsRunnable)
     }
 }

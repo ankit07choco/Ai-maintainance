@@ -32,7 +32,7 @@
                 android:layout_weight="1"
                 android:text="AI Vehicle Sentinel"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_marginStart="12dp" />
 
@@ -40,8 +40,8 @@
                 android:id="@+id/tvConnectionStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="● LIVE VHAL"
-                android:textColor="#10B981"
+                android:text="● VIRTUAL RIG"
+                android:textColor="#3B82F6"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:background="@drawable/badge_background"
@@ -100,6 +100,202 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Speedometer & Mileage Live HUD -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#131C2E"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical"
+                android:weightSum="2"
+                android:baselineAligned="false">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Vehicle Speed"
+                        android:textColor="#64748B"
+                        android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tvSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 km/h"
+                        android:textColor="#3B82F6"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total Mileage"
+                        android:textColor="#64748B"
+                        android:textSize="11sp" />
+                    <TextView
+                        android:id="@+id/tvMileage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0.0 km"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Advanced Vehicle Cockpit Controls -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#131C2E"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vehicle Driving Simulation Controls"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="10dp" />
+
+                <!-- Engine Status Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEngineToggle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Engine: ON"
+                        android:textSize="12sp"
+                        app:backgroundTint="#10B981" />
+                </LinearLayout>
+
+                <!-- Gear Selector Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="4"
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGearP"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Park [P]"
+                        android:textSize="11sp"
+                        app:backgroundTint="#475569" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGearR"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Rev [R]"
+                        android:textSize="11sp"
+                        app:backgroundTint="#475569" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGearN"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Neu [N]"
+                        android:textSize="11sp"
+                        app:backgroundTint="#475569" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGearD"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Drive [D]"
+                        android:textSize="11sp"
+                        app:backgroundTint="#2563EB" />
+                </LinearLayout>
+
+                <!-- Accelerate / Brake / Puncture / Reset Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="4"
+                    android:baselineAligned="false">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDrive"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Accelerate"
+                        android:textSize="11sp"
+                        app:backgroundTint="#3B82F6" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnWearBrakes"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Brake"
+                        android:textSize="11sp"
+                        app:backgroundTint="#F59E0B" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPuncture"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Puncture"
+                        android:textSize="11sp"
+                        app:backgroundTint="#EF4444" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReset"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Reset"
+                        android:textSize="11sp"
+                        app:backgroundTint="#10B981" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Telemetry Grid (2 Columns) -->
         <GridLayout
             android:layout_width="match_parent"
@@ -144,7 +340,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Battery Voltage Card -->
+            <!-- EV Battery Percentage Card -->
             <androidx.cardview.widget.CardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -163,7 +359,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Battery Voltage"
+                        android:text="EV Battery Level"
                         android:textColor="#64748B"
                         android:textSize="11sp" />
 
@@ -171,7 +367,7 @@
                         android:id="@+id/tvBatteryVoltage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="12.6 V"
+                        android:text="100% (450 km)"
                         android:textColor="#FFFFFF"
                         android:textSize="16sp"
                         android:textStyle="bold"
@@ -241,7 +437,7 @@
                         android:id="@+id/tvBrakePads"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="85% Remaining"
+                        android:text="100% Remaining"
                         android:textColor="#FFFFFF"
                         android:textSize="15sp"
                         android:textStyle="bold"
@@ -257,7 +453,8 @@
                 app:cardBackgroundColor="#131C2E"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                android:layout_margin="4dp">
+                android:layout_margin="4dp"
+                android:layout_columnSpan="2">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -277,41 +474,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="88.0 °C"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="4dp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Mileage Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_columnWeight="1"
-                app:cardBackgroundColor="#131C2E"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                android:layout_margin="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total Mileage"
-                        android:textColor="#64748B"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:id="@+id/tvMileage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="45,200 km"
                         android:textColor="#FFFFFF"
                         android:textSize="15sp"
                         android:textStyle="bold"
@@ -347,7 +509,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:weightSum="2">
+                        android:weightSum="2"
+                        android:baselineAligned="false">
 
                         <LinearLayout
                             android:layout_width="0dp"
